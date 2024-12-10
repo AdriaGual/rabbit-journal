@@ -47,29 +47,17 @@ function Bunny({ position, isJumping }) {
 function Camera({ bunnyPosition }) {
   const cameraRef = useRef();
 
-  // Actualitzar la posició de la càmera per apuntar al conill
   useFrame(() => {
     if (cameraRef.current && bunnyPosition) {
-      // Fem que la càmera segueixi al conill amb vista isomètrica
-      cameraRef.current.position.x = bunnyPosition[0] + 5; // Posició X de la càmera
-      cameraRef.current.position.y = bunnyPosition[1] + 5; // Posició Y de la càmera
-      cameraRef.current.position.z = bunnyPosition[2] + 10; // Posició Z de la càmera
+      // Set the camera position to follow the bunny but maintain a fixed isometric view
+      cameraRef.current.position.set(bunnyPosition[0] + 5, bunnyPosition[1] + 15, bunnyPosition[2] + 20);
 
-      cameraRef.current.lookAt(bunnyPosition[0], bunnyPosition[1], bunnyPosition[2] + 1); // Apunta la càmera cap al conill
+      // Keep the camera's orientation fixed at the isometric view
+      cameraRef.current.lookAt(bunnyPosition[0], bunnyPosition[1], bunnyPosition[2]);
     }
   });
 
-  return (
-    <OrthographicCamera
-      ref={cameraRef}
-      makeDefault
-      left={-10}
-      right={10}
-      top={5}
-      bottom={-5}
-      zoom={0.5} // Ajustem el zoom per reduir la profunditat
-    />
-  );
+  return <OrthographicCamera ref={cameraRef} makeDefault zoom={70} />;
 }
 
 export default function App() {
@@ -97,7 +85,7 @@ export default function App() {
 
   const [bunnyPosition, setBunnyPosition] = useState([
     platforms[0].position[0],
-    platforms[0].position[1] + 1.7,
+    platforms[0].position[1] + 1.68,
     platforms[0].position[2],
   ]);
   const [currentLevel, setCurrentLevel] = useState(1); // Start at level 1
@@ -110,16 +98,21 @@ export default function App() {
     if (Math.abs(level - currentLevel) === 1) {
       setIsJumping(true);
       setTimeout(() => {
-        setBunnyPosition([position[0], position[1] + 1.7, position[2]]); // Update bunny position
+        setBunnyPosition([position[0], position[1] + 1.8, position[2]]); // Update bunny position
         setCurrentLevel(level); // Update current level
         setIsJumping(false);
-      }, 250); // Duration of the jump
+      }, 200); // Duration of the jump
     }
   };
 
   return (
     <Canvas style={{ height: '100vh', width: '100vw' }}>
-      <ambientLight />
+      <ambientLight intensity={2} />
+      <directionalLight
+        position={[10, 10, 10]} // Light position in the scene
+        intensity={3} // Brightness
+        castShadow // Enable shadows
+      />
       {platforms.map((platform, i) => (
         <Platform
           key={i}

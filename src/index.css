@@ -18,6 +18,8 @@ html, body, #root, canvas {
   height: 100%;
   margin: 0;
   overflow: hidden;
+  background: url('/textures/pattern.jpg') repeat;
+  background-size: cover;
 }
 
 a {
