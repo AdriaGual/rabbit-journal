@@ -75,3 +75,46 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.task-panel {
+  position: fixed;
+  top: 100px;
+  right: 100px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 45px;
+  border-radius: 25px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.task-panel h3 {
+  margin: 0 0 10px;
+  font-size: 24px;
+  text-align: center;
+}
+
+.task-panel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.task-panel li {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.task-panel button {
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 20px;
+  cursor: pointer;
+}
+
+.task-panel button:hover {
+  background: #45a049;
+}
