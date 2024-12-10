@@ -35,7 +35,8 @@ function Bunny({ position, isJumping }) {
     // Actualitzem la posició del conill
     if (bunnyRef.current) {
       bunnyRef.current.position.y = position[1] + jumpHeight;
-      bunnyRef.current.position.x = position[0] + 1.75;
+      bunnyRef.current.position.x = position[0] + 4.5;
+      bunnyRef.current.position.z = -0.1;
     }
   });
 
@@ -64,7 +65,6 @@ export default function App() {
   const numPlatforms = 20; // Total number of platforms
   const columns = [-5, 0, 5]; // X positions for the three columns
   const spacingY = -5; // Vertical spacing between platforms
-  const horizontalOffset = 0.5; // Small offset for better distribution
 
   // Generate platforms with levels
   const platforms = Array.from({ length: numPlatforms }, (_, i) => {
@@ -74,11 +74,11 @@ export default function App() {
       ? columnIndex // Left to right
       : columns.length - 1 - columnIndex; // Right to left
 
-    const adjustedX = columns[zigzagColumn] + (columnIndex === 1 ? horizontalOffset : 0); // Slightly adjust center column
+    const adjustedX = columns[zigzagColumn]; // Slightly adjust center column
     const adjustedY = i * spacingY;
 
     return {
-      position: [adjustedX, adjustedY, 0],
+      position: [adjustedX - 2.75, adjustedY, 0.5],
       level,
     };
   });
@@ -107,10 +107,10 @@ export default function App() {
 
   return (
     <Canvas style={{ height: '100vh', width: '100vw' }}>
-      <ambientLight intensity={2} />
+      <ambientLight intensity={1.5} />
       <directionalLight
         position={[10, 10, 10]} // Light position in the scene
-        intensity={3} // Brightness
+        intensity={4} // Brightness
         castShadow // Enable shadows
       />
       {platforms.map((platform, i) => (
