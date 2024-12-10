@@ -68,8 +68,8 @@ function Camera({ bunnyPosition }) {
 
   useFrame(() => {
     if (cameraRef.current) {
-      cameraRef.current.position.set(bunnyPosition[0] + 5, bunnyPosition[1] + 15, bunnyPosition[2] + 20);
-      cameraRef.current.lookAt(bunnyPosition[0], bunnyPosition[1], bunnyPosition[2]);
+      cameraRef.current.position.set(bunnyPosition[0] + 8, bunnyPosition[1] + 15, bunnyPosition[2] + 20);
+      cameraRef.current.lookAt(bunnyPosition[0] + 3, bunnyPosition[1], bunnyPosition[2]);
     }
   });
 
@@ -84,23 +84,23 @@ export default function App() {
   const [isJumping, setIsJumping] = useState(false);
 
   // Generate platforms with levels
+  const columnPattern = [-5, 0, 5, 0]; // Defineix el patró 5, 0, -5, 0
   const platforms = Array.from({ length: numPlatforms }, (_, i) => {
     const level = i + 1;
-    const columnIndex = i % columns.length;
-    const zigzagColumn = Math.floor(i / columns.length) % 2 === 0
-      ? columnIndex
-      : columns.length - 1 - columnIndex;
-
-    const adjustedX = columns[zigzagColumn];
+    const adjustedX = columnPattern[i % columnPattern.length]; // Alterna segons el patró
     const adjustedY = i * spacingY;
-
+  
     return {
-      position: [adjustedX - 2.75, adjustedY, 0.5],
+      position: [adjustedX, adjustedY, 0.5],
       level,
     };
   });
 
-  const [bunnyPosition, setBunnyPosition] = useState([platforms[0].position[0], platforms[0].position[1] + 1.68, platforms[0].position[2]]);
+  const [bunnyPosition, setBunnyPosition] = useState([
+    platforms[0].position[0] + 0.1, 
+    platforms[0].position[1] + 2, 
+    platforms[0].position[2]
+  ]);
   const [decorations, setDecorations] = useState([]);
 
   useEffect(() => {
@@ -125,7 +125,7 @@ export default function App() {
     if (Math.abs(level - currentLevel) === 1) {
       setIsJumping(true);
       setTimeout(() => {
-        setBunnyPosition([position[0], position[1] + 1.8, position[2]]);
+        setBunnyPosition([position[0] + 0.1 , position[1] + 2.1, position[2]]);
         setCurrentLevel(level);
         setIsJumping(false);
       }, 200);
