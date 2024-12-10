@@ -2,10 +2,30 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF, OrbitControls, OrthographicCamera } from '@react-three/drei';
 import { useState, useRef, useEffect } from 'react';
 
-// Component for loading and displaying the platform
+// Helper function to generate positions for decorations
+const getDecorationPosition = (platform, type) => {
+  switch (type) {
+    case 'tree':
+      return [
+        platform.position[0] + 9.25 + Math.random() * 0.75, // Randomize X between 9.25 and 10
+        platform.position[1],
+        platform.position[2] - 2.2,
+      ];
+    case 'bush':
+      return [
+        platform.position[0] + 14.3,
+        platform.position[1] - 2,
+        platform.position[2] + 1.5,
+      ];
+    default:
+      return platform.position;
+  }
+};
+
+// Platform component for displaying the platform
 function Platform({ position, onClick }) {
   const { scene } = useGLTF('/assets/tile.glb');
-  const clonedScene = scene.clone(); // Clone the scene to avoid conflicts between multiple instances
+  const clonedScene = scene.clone(); // Clone the scene to avoid conflicts
   return (
     <primitive
       object={clonedScene}
@@ -16,7 +36,7 @@ function Platform({ position, onClick }) {
   );
 }
 
-// Component for loading and displaying the bunny
+// Bunny component for handling bunny animations and position
 function Bunny({ position, isJumping }) {
   const { scene } = useGLTF('/assets/cute_rabbit.glb');
   const bunnyRef = useRef();
@@ -24,43 +44,31 @@ function Bunny({ position, isJumping }) {
 
   useFrame(() => {
     if (isJumping) {
-      if (jumpHeight < 2) {
-        setJumpHeight(jumpHeight + 0.1); // Increase jump height
-      }
-    } else if (jumpHeight > 0) {
-      // Descend after jumping
-      setJumpHeight(jumpHeight - 0.1);
-    }
+      if (jumpHeight < 2) setJumpHeight(jumpHeight + 0.1);
+    } else if (jumpHeight > 0) setJumpHeight(jumpHeight - 0.1);
 
-    // Update bunny position
     if (bunnyRef.current) {
-      bunnyRef.current.position.y = position[1] + jumpHeight;
-      bunnyRef.current.position.x = position[0] + 4.5;
-      bunnyRef.current.position.z = -0.1;
+      bunnyRef.current.position.set(position[0] + 4.5, position[1] + jumpHeight, position[2] - 0.1);
     }
   });
 
-  const adjustedPosition = [position[0] + 1.75, position[1] + 1.75, position[2]]; // Adjust Y position
-  return <primitive ref={bunnyRef} object={scene} position={adjustedPosition} scale={[0.3, 0.3, 0.3]} />;
+  return <primitive ref={bunnyRef} object={scene} position={[position[0] + 1.75, position[1] + 1.75, position[2]]} scale={[0.3, 0.3, 0.3]} />;
 }
 
-// Component to load and display a decoration (e.g., bush or tree)
+// Decoration component for displaying trees, bushes, or any other decoration
 function Decoration({ position, type }) {
   const { scene } = useGLTF(`/assets/${type}.glb`);
-  const clonedScene = scene.clone(); // Clone the scene to avoid conflicts between multiple instances
-  return <primitive object={clonedScene} position={[position[0], position[1], position[2]]} scale={[0.5, 0.5, 0.5]} />;
+  const clonedScene = scene.clone();
+  return <primitive object={clonedScene} position={position} scale={[0.5, 0.5, 0.5]} />;
 }
 
-// Component that controls the camera
+// Camera component to control camera movement based on bunny's position
 function Camera({ bunnyPosition }) {
   const cameraRef = useRef();
 
   useFrame(() => {
-    if (cameraRef.current && bunnyPosition) {
-      // Set the camera position to follow the bunny but maintain a fixed isometric view
+    if (cameraRef.current) {
       cameraRef.current.position.set(bunnyPosition[0] + 5, bunnyPosition[1] + 15, bunnyPosition[2] + 20);
-
-      // Keep the camera's orientation fixed at the isometric view
       cameraRef.current.lookAt(bunnyPosition[0], bunnyPosition[1], bunnyPosition[2]);
     }
   });
@@ -70,20 +78,20 @@ function Camera({ bunnyPosition }) {
 
 export default function App() {
   const numPlatforms = 20; // Total number of platforms
-  const columns = [-5, 0, 5]; // X positions for the three columns
+  const columns = [-5, 0, 5]; // X positions for the columns
   const spacingY = -5; // Vertical spacing between platforms
-  const [currentLevel, setCurrentLevel] = useState(1); // Start at level 1
+  const [currentLevel, setCurrentLevel] = useState(1); // Current level
   const [isJumping, setIsJumping] = useState(false);
 
   // Generate platforms with levels
   const platforms = Array.from({ length: numPlatforms }, (_, i) => {
-    const level = i + 1; // Assign a unique level for each platform
-    const columnIndex = i % columns.length; // Current column (0, 1, or 2)
+    const level = i + 1;
+    const columnIndex = i % columns.length;
     const zigzagColumn = Math.floor(i / columns.length) % 2 === 0
-      ? columnIndex // Left to right
-      : columns.length - 1 - columnIndex; // Right to left
+      ? columnIndex
+      : columns.length - 1 - columnIndex;
 
-    const adjustedX = columns[zigzagColumn]; // Slightly adjust center column
+    const adjustedX = columns[zigzagColumn];
     const adjustedY = i * spacingY;
 
     return {
@@ -92,39 +100,22 @@ export default function App() {
     };
   });
 
-  const [bunnyPosition, setBunnyPosition] = useState([
-    platforms[0].position[0],
-    platforms[0].position[1] + 1.68,
-    platforms[0].position[2],
-  ]);
-
-  const [decorations, setDecorations] = useState([]); // Store decorations in state
+  const [bunnyPosition, setBunnyPosition] = useState([platforms[0].position[0], platforms[0].position[1] + 1.68, platforms[0].position[2]]);
+  const [decorations, setDecorations] = useState([]);
 
   useEffect(() => {
-    const generatedDecorations = platforms.map((platform) => {
-      // Generate decorations only for level 1
+    const generatedDecorations = platforms.flatMap((platform) => {
       if (Math.random() > 0.3) { // 30% chance to add a decoration
-        const isTree = Math.random() > 0.5; // 50% chance for a tree or bush
-        const decorationType = isTree ? 'tree' : 'bush'; // Randomly select tree or bush
-  
-        // Adjust positions based on the decoration type
-        const position = isTree
-          ? [
-              platform.position[0] + 9.25 + Math.random() * 0.75, // Random value between 9.25 and 10
-              platform.position[1],
-              platform.position[2] - 2.2
-            ] // Tree position with random X adjustment
-          : [platform.position[0] + 14.3, platform.position[1] - 2, platform.position[2] + 1.5]; // Bush position
-  
+        const types = ['tree', 'bush'];
+        const type = types[Math.floor(Math.random() * types.length)];
         return {
-          position, // Adjusted position based on decoration type
-          type: decorationType,
+          position: getDecorationPosition(platform, type),
+          type,
         };
       }
-      return null;
-    }).filter(Boolean);
-  
-    setDecorations(generatedDecorations); // Store the decorations once
+      return [];
+    });
+    setDecorations(generatedDecorations); // Store generated decorations
   }, []);
 
   const handlePlatformClick = (platform) => {
@@ -134,32 +125,25 @@ export default function App() {
     if (Math.abs(level - currentLevel) === 1) {
       setIsJumping(true);
       setTimeout(() => {
-        setBunnyPosition([position[0], position[1] + 1.8, position[2]]); // Update bunny position
-        setCurrentLevel(level); // Update current level
+        setBunnyPosition([position[0], position[1] + 1.8, position[2]]);
+        setCurrentLevel(level);
         setIsJumping(false);
-      }, 200); // Duration of the jump
+      }, 200);
     }
   };
-  console.log(decorations)
 
   return (
     <Canvas style={{ height: '100vh', width: '100vw' }}>
       <ambientLight intensity={1.5} />
-      <directionalLight
-        position={[10, 10, 10]} // Light position in the scene
-        intensity={4} // Brightness
-        castShadow // Enable shadows
-      />
+      <directionalLight position={[10, 10, 10]} intensity={4} castShadow />
+      
       {platforms.map((platform, i) => (
-        <Platform
-          key={i}
-          position={platform.position}
-          onClick={() => handlePlatformClick(platform)}
-        />
+        <Platform key={i} position={platform.position} onClick={() => handlePlatformClick(platform)} />
       ))}
       {decorations.map((decoration, i) => (
         <Decoration key={i} position={decoration.position} type={decoration.type} />
       ))}
+      
       <Bunny position={bunnyPosition} isJumping={isJumping} />
       <OrbitControls />
       <Camera bunnyPosition={bunnyPosition} />
